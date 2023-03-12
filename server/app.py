@@ -39,6 +39,8 @@ def zip_for(version):
 
 @app.route('/diff/<string:version>')
 def generate_diff(version):
+  if '/' in version or version in ('latest', 'next') or version.startswith('.'):
+    abort(404)
   dir = Path('versions') / version
   latest = Path('versions') / 'latest'
   if not dir.exists():
