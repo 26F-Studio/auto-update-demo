@@ -18,16 +18,20 @@ end
 
 local function update()
   print('Updating')
-  local request = require 'code.luajit-request'
+  local http = require 'socket.http'
   local address = 'http://127.0.0.1:5000/diff/'..version
   print('Sending request to '..address)
-  local response = request.send(address)
-  print('Response code: '..response.code)
-  if response.code ~= 200 then
+  local body, code, headers, status = http.request(address)
+  if not body then
+    print('Error: '..code)
+    return
+  end
+  print('Response code: '..code)
+  if code ~= 200 then
     print('No new version')
     return
   end
-  fs.write('update.zip', response.body)
+  fs.write('update.zip', body)
   fs.mount('update.zip', 'update')
   copy('update/code', 'code')
   if fs.getInfo('update/removed_file.txt', 'file') then
@@ -40,7 +44,7 @@ local function update()
   fs.remove('update.zip')
   print('Restarting')
   for name, func in pairs(package.loaded) do
-    if name:sub(1, 5) == 'code.' or name == 'ffi' then
+    if name:sub(1, 5) == 'code.' then
       package.loaded[name] = nil
     end
   end
